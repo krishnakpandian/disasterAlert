@@ -1,0 +1,166 @@
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+	<title>Alexa Contacts</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="./Alexa/html5up-solid-state/assets/css/main.css" />
+	<noscript><link rel="stylesheet" href="./Alexa/html5up-solid-state/assets/css/noscript.css" /></noscript>
+</head>
+
+<body class="is-preload">
+
+	<!-- Page Wrapper -->
+	<div id="page-wrapper">
+
+		<!-- Header -->
+		<header id="header">
+			<h1>Alexa Disaster Alerts</h1>
+
+		</header>
+
+
+
+		<!-- Wrapper -->
+		<section id="wrapper">
+			<header>
+				<div class="inner">
+					<h2>Alexa Disaster Contact Setup</h2>
+					<p>Setup alert zones for those you care about to get alerts when they are affected by a natural disaster.</p>
+				</div>
+
+			</header>
+			<style>
+				* {
+					transition: 0.25s all;
+				}
+			</style>
+			<!-- Content -->
+			<div class="wrapper">
+				<div class="inner">
+
+
+					<section>
+						<h3 class="major">Map (click to place an alert area)</h3>
+						<div id="map" style="width:100%;height:500px; margin-bottom:20px"></div>
+						</script>
+						<div style="visibility:hidden;position:fixed; top:0;left:0;right:0; bottom:0; background-color: #00330080;z-index: 5006;">
+							<div id="form_popup" style="visibility:hidden;z-index:500;position: fixed; top:50%; left: 50%;transform: translateX(-50%); background: #343748;padding: 20px;border-radius: 12px; box-shadow: 0px 4px 0 0px black;">
+								<div class="row gtr-uniform">
+									<div class="col-6 col-12-xsmall">
+										<label for="demo-name">Contact's Name</label>
+										<input id="namey" type="text" name="name" value="" />
+									</div>
+									<div class="col-6 col-12-xsmall">
+										<label for="demo-email">Phone Number</label>
+										<input id="phoney" type="text" value="" />
+									</div>
+									<div class="col-12">
+										<ul class="actions">
+											<li><div class="primary" id="submit" >Add Alert</div> </li>
+											<li><input type="reset" value="Reset" /></li>
+										</ul>
+									</div>
+
+								</div>
+							</div>
+						</div>
+						<div id="email_picker" style="position:fixed; top:0;left:0;right:0;bottom:0; background-color: rgba(0, 0, 0, 0.8); height: 100%; width: 100%; z-index: 5006;">
+							<div style="z-index:500;position: fixed; top:50%; left: 50%;transform: translateX(-50%) translateY(-30%); background: #343748;padding: 20px;border-radius: 12px; box-shadow: 0px 4px 0 0px black;">
+								<div class="col-6 col-12-xsmall" style="width:360px; z-index: 10000;width: 350px;">
+									<label style="display:inline; margin-top:3px" for="demo-email">Your Email:</label>
+									<input id="email_input" style="display:inline;width:220px" type="email" id="demo-email" value="" />
+								</div>
+							</div>
+						</div>
+					</section>
+
+
+					<ul class="copyright">
+						<p>&copy; Amazon Alexa </p>
+					</ul>
+				</div>
+		</section>
+
+		</div>
+
+		<!-- Scripts -->
+		<script src="./Alexa/html5up-solid-state/assets/js/jquery.min.js"></script>
+		<script src="./Alexa/html5up-solid-state/assets/js/jquery.scrollex.min.js"></script>
+		<script src="./Alexa/html5up-solid-state/assets/js/browser.min.js"></script>
+		<script src="./Alexa/html5up-solid-state/assets/js/breakpoints.min.js"></script>
+		<script src="./Alexa/html5up-solid-state/assets/js/util.js"></script>
+		<script src="./Alexa/html5up-solid-state/assets/js/main.js"></script>
+		<script>
+			var email;
+			var contactList = [];
+			document.body.style.overflowY = "hidden";
+			$(document).keyup(function(event) {
+				if ($("#email_input").is(":focus") && event.key == "Enter") {
+					document.body.style.overflowY = 'auto';
+					$.post('/user/email', JSON.stringify({email:$("#email_input").val()}))
+					.done(function(msg) {
+							console.log(msg)
+							email = $("#email_input").val();
+							$('#email_picker').fadeOut();
+						}) // let's assume the server will never fail
+				}
+			});
+
+			var map;
+
+			function initMap() {
+				map = new google.maps.Map(document.getElementById('map'), {
+					center: { lat: -34.397, lng: 60.1 },
+					zoom: 2
+				});
+				map.addListener('click', function(e) {
+					placeMarkerAndPanTo(e.latLng, map);
+					console.log(e.latLng);
+					contactList.push({lat:e.latLng.lat(),lng:e.latLng.lng()})
+				});
+			}
+
+
+			function placeMarkerAndPanTo(latLng, map) {
+				var marker = new google.maps.Marker({
+					position: latLng,
+					map: map
+				});
+				map.panTo(latLng);
+				window.scrollTo({
+  					top: document.body.scrollHeight,
+  					left: 0,
+  					behavior: 'smooth'
+				});
+				document.body.style.overflowY = "hidden";
+					document.getElementById("form_popup").style.visibility = "visible";
+					$("#submit").click((e)=>{
+						
+						document.getElementById("form_popup").style.visibility = "hidden";
+						var contact = {name:$("#namey").val(),phone:$("#phoney").val(),lat:contactList[contactList.length - 1].lat,lng:contactList[contactList.length - 1].lng}
+						console.log(contact)
+						xhr = new XMLHttpRequest();
+var url = "/user/contacts";
+xhr.open("POST", url, true);
+xhr.setRequestHeader("Content-type", "application/json");
+xhr.onreadystatechange = function () { 
+    if (xhr.readyState == 4 && xhr.status == 200) {
+        var json = JSON.parse(xhr.responseText);
+        console.log(json)
+	    alert("alert created");
+    }
+}
+var data = JSON.stringify({"email":"tomb@raider.com","name":"LaraCroft"});
+xhr.send(data);
+					});
+			}
+			
+
+		</script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxSGXPX6cKFMQ9hy4h5Y7ylqMnkZHCYbs&callback=initMap" async defer></script>
+</body>
+
+</html>
